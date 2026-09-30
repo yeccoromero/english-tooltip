@@ -1,0 +1,19 @@
+{
+  "name": "english-tooltip",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension: select English text, see the Spanish translation in a tooltip.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "zip": "npm run build && cd dist && zip -r ../english-tooltip.zip ."
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.326",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  }
+}

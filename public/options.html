@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>English Tooltip — Opciones</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.5 system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; }
+  label { display: block; margin: 14px 0 4px; font-weight: 600; }
+  input[type=text], input[type=password], input[type=number], select, textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+  .row label { margin: 0; font-weight: 400; }
+  small { color: #6b7280; }
+  button { padding: 6px 14px; margin-top: 18px; }
+  #status { margin-left: 10px; color: #16a34a; }
+</style></head><body>
+<h1>English Tooltip</h1>
+<div class="row"><input type="checkbox" id="enabled"><label for="enabled">Activar traducción al seleccionar</label></div>
+<div class="row"><input type="checkbox" id="onlyEnglish"><label for="onlyEnglish">Traducir solo si el texto parece inglés</label></div>
+
+<label for="provider">Motor de traducción</label>
+<select id="provider">
+  <option value="auto">Automático (Chrome local → DeepL/Google si hay clave → MyMemory)</option>
+  <option value="chrome">Solo Chrome (local, offline)</option>
+  <option value="mymemory">MyMemory (gratis, con límite diario)</option>
+  <option value="google">Google Cloud Translation</option>
+  <option value="deepl">DeepL</option>
+</select>
+<small>Con motores externos, el texto seleccionado se envía a ese servicio.</small>
+
+<label for="googleKey">API key de Google Cloud Translation</label>
+<input type="password" id="googleKey" autocomplete="off">
+<label for="deeplKey">API key de DeepL (las gratuitas terminan en :fx)</label>
+<input type="password" id="deeplKey" autocomplete="off">
+<label for="anthropicKey">API key de Anthropic (botón 💡 Explicar)</label>
+<input type="password" id="anthropicKey" autocomplete="off">
+<small>Las claves se guardan en tu cuenta de Chrome (sync) y solo se usan desde tu navegador.</small>
+
+<label for="maxChars">Máximo de caracteres por selección</label>
+<input type="number" id="maxChars" min="20" max="5000">
+
+<label for="disabledHosts">Sitios desactivados (uno por línea, p. ej. <code>mail.google.com</code>)</label>
+<textarea id="disabledHosts" rows="4"></textarea>
+
+<button id="save">Guardar</button><span id="status"></span>
+<script src="options.js"></script>
+</body></html>
