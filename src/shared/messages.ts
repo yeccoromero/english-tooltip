@@ -3,6 +3,9 @@ export interface SavedWord {
   translation: string;
   url: string;
   savedAt: number;
+  /** Leitner box 0..5 (review progress) and next review time (ms). */
+  box?: number;
+  due?: number;
 }
 
 export type Request =

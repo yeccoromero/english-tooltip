@@ -16,6 +16,10 @@
 <div class="row"><input type="checkbox" id="enabled"><label for="enabled">Activar traducción al seleccionar</label></div>
 <div class="row"><input type="checkbox" id="skipSpanish"><label for="skipSpanish">No traducir texto que ya está en español (el idioma de origen se detecta solo)</label></div>
 
+<div class="row"><input type="checkbox" id="hover"><label for="hover">Traducir también al dejar el mouse quieto sobre una palabra (sin subrayar)</label></div>
+<label for="hoverDelay">Espera antes de traducir al pasar el mouse (ms)</label>
+<input type="number" id="hoverDelay" min="300" max="3000" step="100">
+
 <label for="provider">Motor de traducción</label>
 <select id="provider">
   <option value="auto">Automático (Chrome local → DeepL/Google si hay clave → MyMemory)</option>

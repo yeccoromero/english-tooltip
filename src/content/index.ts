@@ -2,7 +2,8 @@ import { getSettings, DEFAULT_SETTINGS, type Settings } from "../shared/settings
 import { guessLang, langName, normalize } from "../shared/lang";
 import { send } from "../shared/messages";
 import { detectLocal, translateLocal } from "./local";
-import { Tooltip, type TipContent, type TipHandlers } from "./tooltip";
+import { Tooltip, type TipHandlers } from "./tooltip";
+import { isEditable, wordAtPoint } from "./hover";
 
 // Don't run inside tiny/ad iframes.
 const tinyFrame = window.top !== window && (window.innerWidth < 200 || window.innerHeight < 100);
@@ -89,9 +90,12 @@ async function translate(
 
 async function onSelection(): Promise<void> {
   if (!isActive()) return;
+  hoverWord = null;
   const info = selectionInfo();
-  if (!info) return;
-  const { text, rect } = info;
+  if (info) await run(info.text, info.rect);
+}
+
+async function run(text: string, rect: DOMRect): Promise<void> {
   const my = ++token;
   current = { text };
 
@@ -158,3 +162,56 @@ document.addEventListener("keydown", (e) => {
     tooltip.hide();
   }
 });
+
+// ---- Hover: rest the mouse on a word (no selection needed) ----
+let hoverTimer: number | undefined;
+let hideTimer: number | undefined;
+let hoverWord: { text: string; rect: DOMRect } | null = null; // word currently shown via hover
+let lastMove = { x: 0, y: 0 };
+
+function overTooltip(e: Event): boolean {
+  return e.composedPath().some((n) => tooltip.contains(n));
+}
+
+function inRect(x: number, y: number, r: DOMRect, pad = 4): boolean {
+  return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+}
+
+function hoverLookup(): void {
+  if (!isActive() || !settings.hover) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) return; // the user is selecting: selection wins
+  const { x, y } = lastMove;
+  const el = document.elementFromPoint(x, y);
+  if (!el || isEditable(el)) return;
+  const w = wordAtPoint(x, y);
+  if (!w) return;
+  if (hoverWord && hoverWord.text === w.text && tooltip.visible) return; // already showing
+  hoverWord = w;
+  run(w.text, w.rect);
+}
+
+document.addEventListener(
+  "mousemove",
+  (e) => {
+    lastMove = { x: e.clientX, y: e.clientY };
+    if (overTooltip(e)) {
+      clearTimeout(hideTimer);
+      return;
+    }
+    clearTimeout(hoverTimer);
+    if (hoverWord && tooltip.visible && !inRect(e.clientX, e.clientY, hoverWord.rect)) {
+      // Left the word: close after a short grace period so you can reach the buttons.
+      clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => {
+        token++;
+        tooltip.hide();
+        hoverWord = null;
+      }, 400);
+    } else if (hoverWord && inRect(e.clientX, e.clientY, hoverWord.rect)) {
+      clearTimeout(hideTimer);
+    }
+    if (settings.hover && e.buttons === 0) hoverTimer = window.setTimeout(hoverLookup, settings.hoverDelay);
+  },
+  { passive: true },
+);

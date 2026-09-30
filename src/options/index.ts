@@ -6,6 +6,8 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
   const s = await getSettings();
   $<HTMLInputElement>("enabled").checked = s.enabled;
   $<HTMLInputElement>("skipSpanish").checked = s.skipSpanish;
+  $<HTMLInputElement>("hover").checked = s.hover;
+  $<HTMLInputElement>("hoverDelay").value = String(s.hoverDelay);
   $<HTMLSelectElement>("provider").value = s.provider;
   $<HTMLInputElement>("googleKey").value = s.googleKey;
   $<HTMLInputElement>("deeplKey").value = s.deeplKey;
@@ -19,6 +21,8 @@ $("save").addEventListener("click", async () => {
   await saveSettings({
     enabled: $<HTMLInputElement>("enabled").checked,
     skipSpanish: $<HTMLInputElement>("skipSpanish").checked,
+    hover: $<HTMLInputElement>("hover").checked,
+    hoverDelay: Math.min(3000, Math.max(300, Number($<HTMLInputElement>("hoverDelay").value) || 700)),
     provider: $<HTMLSelectElement>("provider").value as Provider,
     googleKey: $<HTMLInputElement>("googleKey").value.trim(),
     deeplKey: $<HTMLInputElement>("deeplKey").value.trim(),

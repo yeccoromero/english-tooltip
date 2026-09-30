@@ -9,6 +9,8 @@ export interface Settings {
   disabledHosts: string[];
   maxChars: number;
   skipSpanish: boolean;
+  hover: boolean;
+  hoverDelay: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -20,6 +22,8 @@ export const DEFAULT_SETTINGS: Settings = {
   disabledHosts: [],
   maxChars: 500,
   skipSpanish: true,
+  hover: true,
+  hoverDelay: 700,
 };
 
 export async function getSettings(): Promise<Settings> {

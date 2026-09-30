@@ -9,6 +9,12 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
 - Detecta el idioma automáticamente (cualquier idioma → español) y no traduce texto que ya está en español (configurable). Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
+## Traducir sin subrayar (hover)
+Deja el mouse quieto ~0,7 s sobre una palabra y aparece la traducción; al mover el mouse se cierra. Si subrayas algo, manda la selección. Se puede desactivar o cambiar la espera en Opciones.
+
+## Repaso con tarjetas
+Clic derecho en el icono → **Mi vocabulario** → pestaña **Repasar**. Las palabras guardadas con ⭐ salen como tarjetas (inglés → mostrar traducción → «Lo sabía» / «Otra vez»). Usa repetición espaciada tipo Leitner (1, 2, 4, 8, 16, 32 días); las que fallas vuelven a salir en la misma sesión. Atajos: `Espacio` mostrar, `→` lo sabía, `←` otra vez.
+
 ## Uso del icono
 - **Clic en el icono:** activa o desactiva la extensión (la insignia roja «OFF» indica que está apagada). No pide nada más.
 - **Clic derecho en el icono:** «Mi vocabulario» y «Opciones».

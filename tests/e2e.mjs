@@ -72,4 +72,29 @@ await sw.evaluate(() => chrome.storage.sync.set({ enabled: true }));
 await page.waitForTimeout(300);
 console.log("badge when on:", JSON.stringify(await sw.evaluate(() => chrome.action.getBadgeText({}))));
 
+// Hover: rest the mouse on a word, no selection.
+await page.evaluate(() => getSelection().removeAllRanges());
+await page.keyboard.press("Escape");
+const wb = await page.locator("#w").boundingBox();
+await page.mouse.move(wb.x + 40, wb.y + wb.height / 2 - 2);
+await page.mouse.move(wb.x + 40 + 1, wb.y + wb.height / 2 - 2);
+await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin)"), null, { timeout: 15000 });
+console.log("hover tooltip orig:", (await tipText()).split("\n")[1]);
+await page.mouse.move(wb.x + 600, wb.y + 300);
+await page.waitForTimeout(900);
+console.log("hover tooltip closes when leaving:", (await tipText()) === null);
+
+// Flashcards page.
+const extId = new URL(sw.url()).host;
+await sw.evaluate(() => chrome.storage.local.set({ words: [{ text: "serendipity", translation: "serendipia", url: "https://x.com/a", savedAt: 1 }] }));
+const rp = await ctx.newPage();
+await rp.goto(`chrome-extension://${extId}/vocab.html`);
+console.log("front:", await rp.textContent("#front"), "| back hidden:", await rp.locator("#back").isHidden());
+await rp.click("#show");
+console.log("back:", await rp.textContent("#back"));
+await rp.click("#good");
+console.log("done msg:", (await rp.textContent("#done")).slice(0, 20));
+const saved = await sw.evaluate(async () => (await chrome.storage.local.get("words")).words[0]);
+console.log("box after good:", saved.box, "due in future:", saved.due > Date.now());
+
 await ctx.close(); server.close();
