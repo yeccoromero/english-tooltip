@@ -5,9 +5,30 @@ function words(text: string): string[] {
   return text.toLowerCase().match(/[a-záéíóúñü']+/g) ?? [];
 }
 
-/** Collapse whitespace and trim. */
+/** Collapse runs of spaces but keep line breaks, then trim. */
 export function normalize(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text
+    .replace(/[ \t\f\v\u00a0]+/g, " ")
+    .replace(/\s*\n\s*/g, "\n")
+    .trim();
+}
+
+/**
+ * Makes the translation end with the same punctuation as the original
+ * (translators often add or drop a final period / comma / "?"), and adds the
+ * Spanish opening ¿ ¡ when needed. Internal punctuation is left to the translator.
+ */
+export function matchPunctuation(original: string, translation: string, target: string): string {
+  const END = /[.,;:!?…]+$/;
+  const tail = original.trimEnd().match(END)?.[0] ?? "";
+  let t = translation.trimEnd().replace(END, "") + tail;
+  if (target === "es") {
+    if (tail.includes("?") && !t.includes("¿")) t = "¿" + t;
+    if (tail.includes("!") && !t.includes("¡")) t = "¡" + t;
+  } else {
+    t = t.replace(/[¿¡]/g, "");
+  }
+  return t;
 }
 
 /**

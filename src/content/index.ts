@@ -1,5 +1,5 @@
 import { getSettings, DEFAULT_SETTINGS, type Settings } from "../shared/settings";
-import { guessLang, langName, normalize } from "../shared/lang";
+import { guessLang, langName, matchPunctuation, normalize } from "../shared/lang";
 import { send } from "../shared/messages";
 import { detectLocal, translateLocal } from "./local";
 import { Tooltip, type TipHandlers } from "./tooltip";
@@ -115,6 +115,7 @@ async function run(text: string, rect: DOMRect): Promise<void> {
   try {
     const out = await translate(text, source, target);
     if (my !== token) return;
+    out.translation = matchPunctuation(text, out.translation, target);
     current = { text, translation: out.translation };
     const from = out.detected ? langName(out.detected) : null;
     const label = from ? `${cap(from)} → ${cap(langName(target))} · ` : "";
