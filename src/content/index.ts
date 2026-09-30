@@ -52,13 +52,11 @@ const handlers: TipHandlers = {
       type: "save",
       word: { text: current.text, translation: current.translation, url: location.href, savedAt: Date.now() },
     });
-    tooltip.setExplanation("⭐ Guardado en tu vocabulario");
-    tooltip.showExplanationBox();
+    tooltip.setSaved();
   },
   async onExplain() {
     if (!current?.translation) return;
     const my = token;
-    tooltip.showExplanationBox();
     tooltip.setExplanation("Pensando…");
     const res = await send({ type: "explain", text: current.text, translation: current.translation });
     if (my !== token) return;

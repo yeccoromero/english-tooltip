@@ -3,7 +3,7 @@
 Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en inglés en cualquier página y ve la traducción al español en un tooltip**.
 
 ## Funciones
-- Tooltip con la traducción junto a la selección (Shadow DOM, modo claro/oscuro, `Esc` o clic fuera para cerrar).
+- Tooltip minimalista encima de la selección: solo la traducción. Los botones (🔊 pronunciar, ☆ guardar, 💡 explicar) van en un módulo aparte a su lado.
 - 🔊 Pronunciación en inglés (Web Speech API, gratis).
 - ⭐ Guardar en vocabulario → página de vocabulario con lista y **exportación CSV** (importable en Anki).
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).

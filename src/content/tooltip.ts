@@ -1,31 +1,28 @@
 const CSS = `
 :host { all: initial; }
-.tip {
-  position: absolute; z-index: 2147483647; box-sizing: border-box;
-  width: max-content; max-width: 360px; min-width: 120px; padding: 10px 12px;
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #111827; background: #fff; border: 1px solid #d1d5db; border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+* { box-sizing: border-box; }
+.tip, .side {
+  position: absolute; z-index: 2147483647;
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #111827; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.14);
 }
 @media (prefers-color-scheme: dark) {
-  .tip { color: #f3f4f6; background: #1f2937; border-color: #374151; }
-  .orig { color: #9ca3af !important; }
+  .tip, .side { color: #f3f4f6; background: #1f2937; border-color: #374151; }
   button:hover { background: #374151 !important; }
 }
-.orig { font-size: 12px; color: #6b7280; margin-top: 4px; overflow-wrap: anywhere; }
-.tr { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
-.err { color: #dc2626; font-size: 13px; }
-.meta { font-size: 11px; color: #9ca3af; }
-.foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
-.expl { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb33; font-size: 13px; white-space: pre-wrap; }
-.bar { display: flex; gap: 4px; }
+.tip { width: max-content; max-width: 340px; padding: 8px 12px; }
+.tr { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tr.spin { font-weight: 400; opacity: .6; }
+.err { font-size: 13px; color: #dc2626; }
+.expl { margin-top: 8px; padding-top: 8px; border-top: 1px solid #9ca3af44; font-size: 13px; font-weight: 400; white-space: pre-wrap; }
+.side { display: flex; gap: 2px; padding: 3px; }
 button {
-  all: unset; cursor: pointer; padding: 1px 6px; border-radius: 6px; font-size: 12px;
-  border: 1px solid #9ca3af55;
+  all: unset; cursor: pointer; width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
 }
-button:hover { background: #e5e7eb; }
-button[disabled] { opacity: .5; cursor: default; }
-.spin { opacity: .7; }
+button:hover { background: #f3f4f6; }
+[hidden] { display: none !important; }
 `;
 
 export interface TipContent {
@@ -42,22 +39,27 @@ export interface TipHandlers {
   onExplain(): void;
 }
 
+type Box = { top: number; bottom: number; left: number; width: number };
+
 export class Tooltip {
   private host: HTMLElement;
-  private root: ShadowRoot;
   private tip: HTMLElement;
-  private rect: { top: number; bottom: number; left: number; width: number } | null = null;
+  private side: HTMLElement;
+  private rect: Box | null = null;
   private expl: HTMLElement | null = null;
+  private saveBtn: HTMLButtonElement | null = null;
 
   constructor() {
     this.host = document.createElement("english-tooltip");
     this.host.style.cssText = "all:initial;position:absolute;top:0;left:0;z-index:2147483647;";
-    this.root = this.host.attachShadow({ mode: "open" });
+    const root = this.host.attachShadow({ mode: "open" });
     const style = document.createElement("style");
     style.textContent = CSS;
     this.tip = document.createElement("div");
     this.tip.className = "tip";
-    this.root.append(style, this.tip);
+    this.side = document.createElement("div");
+    this.side.className = "side";
+    root.append(style, this.tip, this.side);
   }
 
   contains(target: EventTarget | null): boolean {
@@ -86,65 +88,80 @@ export class Tooltip {
     this.position();
   }
 
-  setExplanation(text: string, isError = false): void {
-    if (!this.expl) return;
-    this.expl.textContent = text;
-    this.expl.style.color = isError ? "#dc2626" : "";
-    this.position();
-  }
-
   hide(): void {
     this.host.remove();
     this.rect = null;
   }
 
-  private render(c: TipContent, h: TipHandlers): void {
-    const body = document.createElement("div");
-    if (c.state === "loading") {
-      body.append(div("tr spin", "Traduciendo…"), div("orig", truncate(c.original, 120)));
-    } else if (c.state === "error") {
-      body.append(div("err", c.error ?? "Error"), div("orig", truncate(c.original, 120)));
-    } else {
-      // Translation first (big), original text below (small).
-      body.append(div("tr", c.translation ?? ""), div("orig", truncate(c.original, 120)));
-      const foot = document.createElement("div");
-      foot.className = "foot";
-      const bar = document.createElement("div");
-      bar.className = "bar";
-      bar.append(
-        btn("🔊", "Escuchar pronunciación", h.onSpeak),
-        btn("⭐", "Guardar en vocabulario", h.onSave),
-        btn("💡", "Explicar (Claude)", h.onExplain),
-      );
-      foot.append(div("meta", c.provider ?? ""), bar);
-      this.expl = div("expl", "");
-      this.expl.hidden = true;
-      body.append(foot, this.expl);
-    }
-    if (c.state !== "done") this.expl = null;
-    this.tip.replaceChildren(body);
+  /** Fill the on-demand explanation inside the tooltip. */
+  setExplanation(text: string, isError = false): void {
+    if (!this.expl) return;
+    this.expl.hidden = false;
+    this.expl.textContent = text;
+    this.expl.style.color = isError ? "#dc2626" : "";
+    this.position();
   }
 
-  /** Reveal the explanation box (called before filling it). */
-  showExplanationBox(): void {
-    if (this.expl) this.expl.hidden = false;
+  setSaved(): void {
+    if (this.saveBtn) {
+      this.saveBtn.textContent = "★";
+      this.saveBtn.title = "Guardado";
+    }
+  }
+
+  private render(c: TipContent, h: TipHandlers): void {
+    this.expl = null;
+    this.saveBtn = null;
+    this.tip.removeAttribute("title");
+    const body = document.createElement("div");
+
+    if (c.state === "loading") {
+      body.append(div("tr spin", "Traduciendo…"));
+    } else if (c.state === "error") {
+      body.append(div("err", c.error ?? "Error"));
+    } else {
+      body.append(div("tr", c.translation ?? ""));
+      this.expl = div("expl", "");
+      this.expl.hidden = true;
+      body.append(this.expl);
+      if (c.provider) this.tip.title = c.provider;
+    }
+    this.tip.replaceChildren(body);
+
+    // Actions live in their own module beside the tooltip (only once there is a translation).
+    this.side.hidden = c.state !== "done";
+    if (c.state === "done") {
+      this.saveBtn = btn("☆", "Guardar en vocabulario", h.onSave);
+      this.side.replaceChildren(btn("🔊", "Escuchar pronunciación", h.onSpeak), this.saveBtn, btn("💡", "Explicar (Claude)", h.onExplain));
+    }
   }
 
   private position(): void {
     if (!this.rect) return;
     const r = this.rect;
-    const tip = this.tip;
     const minX = window.scrollX + 4;
     const maxX = window.scrollX + document.documentElement.clientWidth - 4;
-    tip.style.left = "0px";
-    tip.style.top = "0px";
-    const { width, height } = tip.getBoundingClientRect();
     const gap = 8;
-    let top = r.top - height - gap;
-    if (top < window.scrollY + 4) top = r.bottom + gap; // not enough room above → below
-    const left = Math.max(minX, Math.min(r.left + r.width / 2 - width / 2, maxX - width));
-    tip.style.left = `${left}px`;
-    tip.style.top = `${top}px`;
+
+    this.tip.style.left = "0px";
+    this.tip.style.top = "0px";
+    const { width: tw, height: th } = this.tip.getBoundingClientRect();
+    const sideShown = !this.side.hidden;
+    const { width: sw, height: sh } = sideShown ? this.side.getBoundingClientRect() : { width: 0, height: 0 };
+    const sideGap = sideShown ? 6 : 0;
+
+    // Center the tooltip over the selection, leaving room for the side module.
+    let top = r.top - th - gap;
+    if (top < window.scrollY + 4) top = r.bottom + gap; // no room above → below
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(minX, Math.min(left, maxX - tw - sw - sideGap));
+
+    this.tip.style.left = `${left}px`;
+    this.tip.style.top = `${top}px`;
+    if (sideShown) {
+      this.side.style.left = `${left + tw + sideGap}px`;
+      this.side.style.top = `${top + (th - sh) / 2}px`;
+    }
   }
 }
 
@@ -164,8 +181,4 @@ function btn(label: string, title: string, onClick: () => void): HTMLButtonEleme
     onClick();
   });
   return b;
-}
-
-function truncate(s: string, n: number): string {
-  return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }

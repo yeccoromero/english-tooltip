@@ -35,6 +35,7 @@ await page.evaluate(() => {
 });
 await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin), .err"), null, { timeout: 15000 });
 console.log("TOOLTIP (english):\n" + (await tipText()));
+console.log("side buttons:", await page.evaluate(() => document.querySelector("english-tooltip").shadowRoot.querySelectorAll(".side button").length));
 await page.screenshot({ path: "e2e.png" });
 
 await page.keyboard.press("Escape");
@@ -79,7 +80,7 @@ const wb = await page.locator("#w").boundingBox();
 await page.mouse.move(wb.x + 40, wb.y + wb.height / 2 - 2);
 await page.mouse.move(wb.x + 40 + 1, wb.y + wb.height / 2 - 2);
 await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin)"), null, { timeout: 15000 });
-console.log("hover tooltip orig:", (await tipText()).split("\n")[1]);
+console.log("hover tooltip text:", await tipText());
 await page.mouse.move(wb.x + 600, wb.y + 300);
 await page.waitForTimeout(900);
 console.log("hover tooltip closes when leaving:", (await tipText()) === null);
