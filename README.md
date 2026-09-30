@@ -18,7 +18,16 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 
 Con motores externos el texto seleccionado se envía a ese servicio.
 
-## Uso
+## Instalar sin Node (lo más fácil)
+La carpeta `dist/` ya viene compilada en el repo.
+1. En GitHub: **Code → Download ZIP** y descomprime.
+2. Abre `chrome://extensions` y activa **Modo desarrollador** (arriba a la derecha).
+3. **Cargar descomprimida** → elige la carpeta `english-tooltip-main/dist`.
+4. Fija la extensión con el icono 🧩 y abre ⚙ **Opciones** para ajustar el motor o poner claves.
+
+Cuando actualices el código, vuelve a descargar y pulsa ↻ en `chrome://extensions`.
+
+## Desarrollo
 ```bash
 npm install
 npm run build        # genera dist/
