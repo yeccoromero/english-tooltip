@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { guessLang, normalize, langName, matchPunctuation } from "../src/shared/lang.ts";
+import { guessLang, normalize, langName, matchPunctuation, sentenceAt } from "../src/shared/lang.ts";
 
 test("guesses English", () => {
   assert.equal(guessLang("The quick brown fox jumps over the lazy dog"), "en");
@@ -41,4 +41,16 @@ test("punctuation: target English has no ¿ ¡", () => {
 });
 test("punctuation: ellipsis is kept", () => {
   assert.equal(matchPunctuation("Well...", "Bueno.", "es"), "Bueno...");
+});
+
+test("sentenceAt returns the sentence around the span", () => {
+  const full = "First one. She felt serendipity at the door! Then left.";
+  const idx = full.indexOf("serendipity");
+  assert.equal(sentenceAt(full, idx, "serendipity".length), "She felt serendipity at the door!");
+  assert.equal(sentenceAt(full, 0, 5), "First one.");
+  assert.equal(sentenceAt(full, full.indexOf("Then"), 4), "Then left.");
+});
+test("sentenceAt stops at line breaks", () => {
+  const full = "Title line\nThe word here matters";
+  assert.equal(sentenceAt(full, full.indexOf("word"), 4), "The word here matters");
 });

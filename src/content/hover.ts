@@ -16,7 +16,7 @@ export function isEditable(el: Element | null): boolean {
 }
 
 /** The word under the mouse pointer and its on-screen rect, or null if the pointer isn't on a word. */
-export function wordAtPoint(x: number, y: number): { text: string; rect: DOMRect } | null {
+export function wordAtPoint(x: number, y: number): { text: string; rect: DOMRect; range: Range } | null {
   const caret = caretAt(x, y);
   if (!caret || caret.node.nodeType !== Node.TEXT_NODE) return null;
   const str = caret.node.textContent ?? "";
@@ -34,7 +34,7 @@ export function wordAtPoint(x: number, y: number): { text: string; rect: DOMRect
   for (const rect of range.getClientRects()) {
     // The caret API snaps to the nearest text, so make sure the pointer is really over the word.
     if (x >= rect.left - 1 && x <= rect.right + 1 && y >= rect.top - 1 && y <= rect.bottom + 1) {
-      return { text, rect: range.getBoundingClientRect() };
+      return { text, rect: range.getBoundingClientRect(), range };
     }
   }
   return null;

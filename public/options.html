@@ -17,8 +17,13 @@
 <p><small>Todo lo que subrayes se traduce: el idioma se detecta solo y se traduce al español. Si el texto ya está en español, se traduce al inglés.</small></p>
 
 <div class="row"><input type="checkbox" id="hover"><label for="hover">Traducir también al dejar el mouse quieto sobre una palabra (sin subrayar)</label></div>
+<div class="row"><input type="checkbox" id="hoverRequireAlt"><label for="hoverRequireAlt">Solo traducir al pasar el mouse si mantengo la tecla Alt pulsada</label></div>
 <label for="hoverDelay">Espera antes de traducir al pasar el mouse (ms)</label>
 <input type="number" id="hoverDelay" min="300" max="3000" step="100">
+
+<div class="row"><input type="checkbox" id="reminder"><label for="reminder">Avisarme cada día para repasar mi vocabulario</label></div>
+<label for="reminderHour">Hora del aviso (0–23)</label>
+<input type="number" id="reminderHour" min="0" max="23">
 
 <label for="provider">Motor de traducción</label>
 <select id="provider">

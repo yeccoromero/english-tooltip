@@ -8,7 +8,7 @@ import fs from "node:fs";
 const ext = path.resolve("dist");
 const server = http.createServer((_, res) => {
   res.setHeader("content-type", "text/html");
-  res.end(`<body style="font:20px sans-serif;padding:220px 120px"><p id="p">The quick brown fox jumps over the lazy dog.</p><p id="w">serendipity</p><p id="es">El perro de mi vecino es muy grande.</p></body>`);
+  res.end(`<body style="font:20px sans-serif;padding:220px 120px"><p id="p">The quick brown fox jumps over the lazy dog.</p><p id="w">serendipity</p><p id="ctxp">First one. She felt serendipity at the door! Then left.</p><p id="es">El perro de mi vecino es muy grande.</p></body>`);
 }).listen(0);
 const url = `http://localhost:${server.address().port}/`;
 
@@ -19,7 +19,12 @@ const ctx = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.t
 // Stub network in the service worker.
 const sw = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker"));
 await sw.evaluate(() => {
-  globalThis.fetch = async () => new Response(JSON.stringify({ responseStatus: 200, responseData: { translatedText: "El rápido zorro marrón salta sobre el perro perezoso." } }));
+  globalThis.fetch = async (url) => {
+    const json = String(url).includes("dictionaryapi.dev")
+      ? [{ phonetic: "/ˌsɛɹ.ənˈdɪp.ɪ.ti/", meanings: [{ partOfSpeech: "noun", definitions: [{ definition: "Finding something good by chance.", example: "Pure serendipity." }] }] }]
+      : { responseStatus: 200, responseData: { translatedText: "El rápido zorro marrón salta sobre el perro perezoso." } };
+    return new Response(JSON.stringify(json));
+  };
 });
 
 const page = await ctx.newPage();
@@ -85,6 +90,49 @@ await page.mouse.move(wb.x + 600, wb.y + 300);
 await page.waitForTimeout(900);
 console.log("hover tooltip closes when leaving:", (await tipText()) === null);
 
+// Dictionary + context sentence + save.
+await page.keyboard.press("Escape");
+await page.evaluate(() => {
+  const t = document.getElementById("ctxp").firstChild;
+  const i = t.textContent.indexOf("serendipity");
+  const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 11);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+});
+await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".side button[title^='Definición']"), null, { timeout: 15000 });
+await page.evaluate(() => document.querySelector("english-tooltip").shadowRoot.querySelector(".side button[title^='Definición']").click());
+await page.waitForFunction(() => document.querySelector("english-tooltip").shadowRoot.querySelector(".expl")?.textContent.includes("Finding"), null, { timeout: 10000 });
+console.log("definition:", (await page.evaluate(() => document.querySelector("english-tooltip").shadowRoot.querySelector(".expl").textContent)).replace(/\n/g, " | "));
+await page.evaluate(() => document.querySelector("english-tooltip").shadowRoot.querySelector(".side button[title='Guardar en vocabulario']").click());
+await page.waitForTimeout(800);
+const w1 = await sw.evaluate(async () => (await chrome.storage.local.get("words")).words[0]);
+console.log("saved context:", w1.context, "| def:", w1.definition?.pos);
+
+// Alt mode: no hover tooltip without Alt, instant with Alt.
+await page.keyboard.press("Escape");
+await page.evaluate(() => getSelection().removeAllRanges());
+await sw.evaluate(() => chrome.storage.sync.set({ hoverRequireAlt: true }));
+await page.waitForTimeout(300);
+const wb2 = await page.locator("#w").boundingBox();
+await page.mouse.move(wb2.x + 40, wb2.y + wb2.height / 2 - 2);
+await page.mouse.move(wb2.x + 42, wb2.y + wb2.height / 2 - 2);
+await page.waitForTimeout(1200);
+console.log("no hover tooltip without Alt:", (await tipText()) === null);
+await page.keyboard.down("Alt");
+await page.mouse.move(wb2.x + 44, wb2.y + wb2.height / 2 - 2);
+await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin)"), null, { timeout: 8000 });
+console.log("hover tooltip with Alt: true");
+await page.keyboard.up("Alt");
+await sw.evaluate(() => chrome.storage.sync.set({ hoverRequireAlt: false }));
+
+// Reminder alarm.
+await sw.evaluate(() => chrome.storage.sync.set({ reminder: true, reminderHour: 9 }));
+await page.waitForTimeout(500);
+console.log("alarm scheduled:", (await sw.evaluate(() => chrome.alarms.getAll())).map((a) => a.name).join(","));
+await sw.evaluate(() => chrome.storage.sync.set({ reminder: false }));
+await page.waitForTimeout(300);
+console.log("alarm cleared:", (await sw.evaluate(() => chrome.alarms.getAll())).length === 0);
+
 // Flashcards page.
 const extId = new URL(sw.url()).host;
 await sw.evaluate(() => chrome.storage.local.set({ words: [{ text: "serendipity", translation: "serendipia", url: "https://x.com/a", savedAt: 1 }] }));
@@ -94,6 +142,7 @@ console.log("front:", await rp.textContent("#front"), "| back hidden:", await rp
 await rp.click("#show");
 console.log("back:", await rp.textContent("#back"));
 await rp.click("#good");
+console.log("chips:", await rp.textContent("#streak"), "|", await rp.textContent("#today"));
 console.log("done msg:", (await rp.textContent("#done")).slice(0, 20));
 const saved = await sw.evaluate(async () => (await chrome.storage.local.get("words")).words[0]);
 console.log("box after good:", saved.box, "due in future:", saved.due > Date.now());

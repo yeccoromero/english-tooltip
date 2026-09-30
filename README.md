@@ -9,8 +9,15 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
 - Detecta el idioma automáticamente (cualquier idioma → español) y traduce todo lo que subrayas: cualquier idioma → español, y si el texto ya está en español → inglés. Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
+## Contexto y diccionario
+- Al guardar con ☆ se guarda también **la frase donde encontraste la palabra** y, si es una sola palabra, su **definición** (📖, diccionario gratuito dictionaryapi.dev: pronunciación fonética, tipo de palabra, definición y ejemplo).
+- En el repaso, la tarjeta muestra la traducción, la definición y la frase con la palabra resaltada.
+
+## Racha y aviso diario
+La página de vocabulario muestra tu **racha de días** y lo repasado hoy. En Opciones puedes activar un **aviso diario** (hora configurable) que te dice cuántas palabras te esperan.
+
 ## Traducir sin subrayar (hover)
-Deja el mouse quieto ~0,7 s sobre una palabra y aparece la traducción; al mover el mouse se cierra. Si subrayas algo, manda la selección. Se puede desactivar o cambiar la espera en Opciones.
+Deja el mouse quieto ~0,7 s sobre una palabra y aparece la traducción; al mover el mouse se cierra. Si subrayas algo, manda la selección. Se puede desactivar, cambiar la espera o exigir **mantener Alt** pulsada (traduce al instante y gasta menos consultas) en Opciones.
 
 ## Repaso con tarjetas
 Clic derecho en el icono → **Mi vocabulario** → pestaña **Repasar**. Las palabras guardadas con ⭐ salen como tarjetas (inglés → mostrar traducción → «Lo sabía» / «Otra vez»). Usa repetición espaciada tipo Leitner (1, 2, 4, 8, 16, 32 días); las que fallas vuelven a salir en la misma sesión. Atajos: `Espacio` mostrar, `→` lo sabía, `←` otra vez.

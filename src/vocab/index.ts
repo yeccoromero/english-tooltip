@@ -1,5 +1,5 @@
 import type { SavedWord } from "../shared/messages";
-import { dueQueue, grade } from "./review";
+import { dayKey, dueQueue, grade, streak } from "./review";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -31,7 +31,21 @@ let queue: SavedWord[] = [];
 let total = 0;
 let current: SavedWord | null = null;
 
+async function loadCounts(): Promise<Record<string, number>> {
+  const { reviews = {} } = (await chrome.storage.local.get("reviews")) as { reviews?: Record<string, number> };
+  return reviews;
+}
+
+async function renderChips(): Promise<void> {
+  const counts = await loadCounts();
+  const s = streak(counts);
+  $("streak").textContent = s > 0 ? `🔥 Racha: ${s} ${s === 1 ? "día" : "días"}` : "🔥 Sin racha todavía";
+  const t = counts[dayKey()] ?? 0;
+  $("today").textContent = `Hoy: ${t} ${t === 1 ? "repasada" : "repasadas"}`;
+}
+
 async function startReview(): Promise<void> {
+  renderChips();
   const words = await load();
   queue = dueQueue(words);
   total = words.length;
@@ -41,6 +55,8 @@ async function startReview(): Promise<void> {
 function next(): void {
   current = queue.shift() ?? null;
   $("stats").textContent = `${queue.length + (current ? 1 : 0)} por repasar · ${total} guardadas`;
+  $("def").hidden = true;
+  $("ctx").hidden = true;
   const card = $("card");
   card.hidden = !current;
   $("actShow").hidden = !current;
@@ -57,6 +73,9 @@ function next(): void {
   }
   $("front").textContent = current.text;
   $("back").textContent = current.translation;
+  const d = current.definition;
+  $("def").textContent = d ? [[d.phonetic, d.pos].filter(Boolean).join(" · "), d.meaning].filter(Boolean).join("\n") : "";
+  fillContext($("ctx"), current);
   try {
     $("src").textContent = new URL(current.url).hostname;
   } catch {
@@ -64,8 +83,26 @@ function next(): void {
   }
 }
 
+/** Sentence where the word was found, with the word highlighted (built with text nodes, no HTML injection). */
+function fillContext(el: HTMLElement, w: SavedWord): void {
+  el.replaceChildren();
+  if (!w.context) return;
+  const i = w.context.toLowerCase().indexOf(w.text.toLowerCase());
+  if (i < 0) {
+    el.textContent = w.context;
+  } else {
+    const mark = document.createElement("mark");
+    mark.textContent = w.context.slice(i, i + w.text.length);
+    el.append(w.context.slice(0, i), mark, w.context.slice(i + w.text.length));
+  }
+}
+
+const w_hasContext = () => !!current?.context;
+
 function reveal(): void {
   if (!current) return;
+  $("def").hidden = !$("def").textContent;
+  $("ctx").hidden = !w_hasContext();
   $("back").hidden = false;
   $("actShow").hidden = true;
   $("actGrade").hidden = false;
@@ -74,9 +111,13 @@ function reveal(): void {
 async function answer(known: boolean): Promise<void> {
   if (!current) return;
   const updated = grade(current, known);
+  const counts = await loadCounts();
+  counts[dayKey()] = (counts[dayKey()] ?? 0) + 1;
+  await chrome.storage.local.set({ reviews: counts });
   const words = await load();
   await store(words.map((w) => (w.savedAt === updated.savedAt ? updated : w)));
   if (!known) queue.push(updated); // see it again at the end of this session
+  renderChips();
   next();
 }
 
@@ -123,6 +164,12 @@ async function renderList(): Promise<void> {
     es.className = "es";
     es.textContent = w.translation;
     box.append(en, es);
+    if (w.context) {
+      const c = document.createElement("div");
+      c.className = "ctx";
+      c.textContent = w.context;
+      box.append(c);
+    }
     const del = document.createElement("button");
     del.textContent = "✕";
     del.title = "Quitar";

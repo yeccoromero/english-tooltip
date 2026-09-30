@@ -21,6 +21,12 @@
   .card .back { font-size: 20px; color: #4f46e5; }
   @media (prefers-color-scheme: dark) { .card .back { color: #a5b4fc; } }
   .card .src { font-size: 12px; color: #6b7280; }
+  .card .def { font-size: 14px; color: #6b7280; white-space: pre-wrap; }
+  .card .ctx { font-size: 14px; font-style: italic; }
+  .card .ctx mark { background: #fde68a66; color: inherit; border-radius: 3px; padding: 0 2px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chip { font-size: 13px; padding: 3px 10px; border-radius: 99px; border: 1px solid #9ca3af66; }
+  li .ctx { font-size: 12px; color: #6b7280; font-style: italic; }
   .actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
   .actions button { padding: 8px 18px; border-radius: 8px; border: 1px solid #9ca3af66; font-size: 14px; }
   .good { background: #16a34a; color: #fff; border-color: #16a34a !important; }
@@ -31,10 +37,12 @@
 <nav><button id="tabReview" class="on">Repasar</button><button id="tabList">Lista</button></nav>
 
 <section id="review">
-  <div class="stats" id="stats"></div>
+  <div class="chips"><span class="chip" id="streak"></span><span class="chip" id="today"></span><span class="chip" id="stats"></span></div>
   <div class="card" id="card" hidden>
     <div class="front" id="front"></div>
     <div class="back" id="back" hidden></div>
+    <div class="def" id="def" hidden></div>
+    <div class="ctx" id="ctx" hidden></div>
     <div class="src" id="src"></div>
   </div>
   <div class="empty" id="done" hidden></div>

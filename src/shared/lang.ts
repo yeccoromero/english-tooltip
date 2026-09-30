@@ -62,3 +62,13 @@ export function langName(code: string): string {
     return code;
   }
 }
+
+/** The sentence of `full` that contains the span [idx, idx+len). */
+export function sentenceAt(full: string, idx: number, len: number): string {
+  let start = 0;
+  for (const m of full.slice(0, idx).matchAll(/[.!?…]["'”’)]*\s+|\n/g)) start = (m.index ?? 0) + m[0].length;
+  const rest = full.slice(idx + len);
+  const m = rest.match(/[.!?…]["'”’)]*(\s|$)|\n/);
+  const end = m ? idx + len + (m.index ?? 0) + m[0].trimEnd().length : full.length;
+  return full.slice(start, end).trim();
+}

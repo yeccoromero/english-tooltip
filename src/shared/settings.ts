@@ -10,6 +10,9 @@ export interface Settings {
   maxChars: number;
   hover: boolean;
   hoverDelay: number;
+  hoverRequireAlt: boolean;
+  reminder: boolean;
+  reminderHour: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +25,9 @@ export const DEFAULT_SETTINGS: Settings = {
   maxChars: 500,
   hover: true,
   hoverDelay: 700,
+  hoverRequireAlt: false,
+  reminder: false,
+  reminderHour: 20,
 };
 
 export async function getSettings(): Promise<Settings> {

@@ -1,9 +1,12 @@
 import { getSettings, saveSettings } from "../shared/settings";
 import { explainWithClaude, translateRemote } from "../shared/providers";
-import type { Request, Response, SavedWord } from "../shared/messages";
+import { lookup } from "../shared/dictionary";
+import { dueQueue } from "../vocab/review";
+import type { Definition, Request, Response, SavedWord } from "../shared/messages";
 
 const cache = new Map<string, { translation: string; provider: string; detected?: string }>();
 const CACHE_MAX = 200;
+const defCache = new Map<string, Definition>();
 
 async function handle(req: Request): Promise<Response> {
   const s = await getSettings();
@@ -19,6 +22,16 @@ async function handle(req: Request): Promise<Response> {
     }
     if (req.type === "explain") {
       return { ok: true, explanation: await explainWithClaude(req.text, req.translation, s.anthropicKey) };
+    }
+    if (req.type === "define") {
+      const key = req.word.toLowerCase();
+      let def = defCache.get(key);
+      if (!def) {
+        def = await lookup(req.word);
+        if (defCache.size >= CACHE_MAX) defCache.delete(defCache.keys().next().value as string);
+        defCache.set(key, def);
+      }
+      return { ok: true, definition: def };
     }
     if (req.type === "save") {
       const { words = [] } = (await chrome.storage.local.get("words")) as { words?: SavedWord[] };
@@ -64,3 +77,39 @@ chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "options") chrome.runtime.openOptionsPage();
 });
 updateBadge();
+
+// ---- Daily review reminder ----
+const ALARM = "daily-review";
+
+async function scheduleReminder(): Promise<void> {
+  const { reminder, reminderHour } = await getSettings();
+  await chrome.alarms.clear(ALARM);
+  if (!reminder) return;
+  const when = new Date();
+  when.setHours(reminderHour, 0, 0, 0);
+  if (when.getTime() <= Date.now()) when.setDate(when.getDate() + 1);
+  await chrome.alarms.create(ALARM, { when: when.getTime(), periodInMinutes: 24 * 60 });
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== ALARM) return;
+  const { words = [] } = (await chrome.storage.local.get("words")) as { words?: SavedWord[] };
+  const due = dueQueue(words).length;
+  if (due === 0) return;
+  await chrome.notifications.create("review", {
+    type: "basic",
+    iconUrl: "icons/128.png",
+    title: "Hora de repasar",
+    message: due === 1 ? "Tienes 1 palabra para repasar." : `Tienes ${due} palabras para repasar.`,
+  });
+});
+
+chrome.notifications.onClicked.addListener((id) => {
+  if (id === "review") chrome.tabs.create({ url: chrome.runtime.getURL("vocab.html") });
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && ("reminder" in changes || "reminderHour" in changes)) scheduleReminder();
+});
+chrome.runtime.onInstalled.addListener(scheduleReminder);
+chrome.runtime.onStartup.addListener(scheduleReminder);

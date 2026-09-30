@@ -31,11 +31,14 @@ export interface TipContent {
   translation?: string;
   provider?: string;
   error?: string;
+  /** Single English word → offer the dictionary button. */
+  canDefine?: boolean;
 }
 
 export interface TipHandlers {
   onSpeak(): void;
   onSave(): void;
+  onDefine(): void;
   onExplain(): void;
 }
 
@@ -132,7 +135,12 @@ export class Tooltip {
     this.side.hidden = c.state !== "done";
     if (c.state === "done") {
       this.saveBtn = btn("☆", "Guardar en vocabulario", h.onSave);
-      this.side.replaceChildren(btn("🔊", "Escuchar pronunciación", h.onSpeak), this.saveBtn, btn("💡", "Explicar (Claude)", h.onExplain));
+      this.side.replaceChildren(
+        btn("🔊", "Escuchar pronunciación", h.onSpeak),
+        ...(c.canDefine ? [btn("📖", "Definición (diccionario)", h.onDefine)] : []),
+        this.saveBtn,
+        btn("💡", "Explicar (Claude)", h.onExplain),
+      );
     }
   }
 

@@ -7,6 +7,9 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
   $<HTMLInputElement>("enabled").checked = s.enabled;
   $<HTMLInputElement>("hover").checked = s.hover;
   $<HTMLInputElement>("hoverDelay").value = String(s.hoverDelay);
+  $<HTMLInputElement>("hoverRequireAlt").checked = s.hoverRequireAlt;
+  $<HTMLInputElement>("reminder").checked = s.reminder;
+  $<HTMLInputElement>("reminderHour").value = String(s.reminderHour);
   $<HTMLSelectElement>("provider").value = s.provider;
   $<HTMLInputElement>("googleKey").value = s.googleKey;
   $<HTMLInputElement>("deeplKey").value = s.deeplKey;
@@ -20,6 +23,9 @@ $("save").addEventListener("click", async () => {
   await saveSettings({
     enabled: $<HTMLInputElement>("enabled").checked,
     hover: $<HTMLInputElement>("hover").checked,
+    hoverRequireAlt: $<HTMLInputElement>("hoverRequireAlt").checked,
+    reminder: $<HTMLInputElement>("reminder").checked,
+    reminderHour: Math.min(23, Math.max(0, Math.floor(Number($<HTMLInputElement>("reminderHour").value)) || 0)),
     hoverDelay: Math.min(3000, Math.max(300, Number($<HTMLInputElement>("hoverDelay").value) || 700)),
     provider: $<HTMLSelectElement>("provider").value as Provider,
     googleKey: $<HTMLInputElement>("googleKey").value.trim(),

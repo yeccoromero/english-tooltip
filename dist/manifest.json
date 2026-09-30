@@ -3,12 +3,13 @@
   "name": "English Tooltip",
   "version": "0.1.0",
   "description": "Selecciona texto en inglés y ve la traducción al español en un tooltip. Guarda vocabulario para aprender.",
-  "permissions": ["storage", "contextMenus"],
+  "permissions": ["storage", "contextMenus", "alarms", "notifications"],
   "host_permissions": [
     "https://api.mymemory.translated.net/*",
     "https://translation.googleapis.com/*",
     "https://api.deepl.com/*",
     "https://api-free.deepl.com/*",
+    "https://api.dictionaryapi.dev/*",
     "https://api.anthropic.com/*"
   ],
   "background": { "service_worker": "background.js", "type": "module" },
