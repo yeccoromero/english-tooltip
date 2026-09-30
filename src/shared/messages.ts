@@ -9,7 +9,7 @@ export interface SavedWord {
 }
 
 export type Request =
-  | { type: "translate"; text: string; source?: string }
+  | { type: "translate"; text: string; source?: string; target?: string }
   | { type: "explain"; text: string; translation: string }
   | { type: "save"; word: SavedWord };
 

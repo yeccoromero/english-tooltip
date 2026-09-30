@@ -9,6 +9,9 @@ test("guesses Spanish", () => {
   assert.equal(guessLang("El perro de mi vecino es muy grande"), "es");
   assert.equal(guessLang("¿Cómo estás?"), "es");
 });
+test("short English snippets are not misread as Spanish", () => {
+  for (const t of ["no", "me", "no way", "let me know", "a lot"]) assert.notEqual(guessLang(t), "es", t);
+});
 test("unsure → null (auto-detect later)", () => {
   assert.equal(guessLang("serendipity"), null);
   assert.equal(guessLang("日本語のテキスト"), null);

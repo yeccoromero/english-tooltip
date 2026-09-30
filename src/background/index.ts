@@ -9,10 +9,10 @@ async function handle(req: Request): Promise<Response> {
   const s = await getSettings();
   try {
     if (req.type === "translate") {
-      const key = `${req.source ?? "auto"}|${req.text}`;
+      const key = `${req.source ?? "auto"}>${req.target ?? "es"}|${req.text}`;
       const hit = cache.get(key);
       if (hit) return { ok: true, ...hit };
-      const out = await translateRemote(req.text, s, req.source);
+      const out = await translateRemote(req.text, s, req.source, req.target);
       if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
       cache.set(key, out);
       return { ok: true, ...out };

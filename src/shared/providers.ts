@@ -2,7 +2,6 @@ import type { Settings } from "./settings";
 
 export class ProviderError extends Error {}
 
-const DST = "es";
 const TIMEOUT_MS = 10_000;
 
 /** fetch with a timeout so the tooltip never hangs on "Traduciendo…". */
@@ -15,8 +14,8 @@ async function fetchT(input: string, init: RequestInit = {}): Promise<Response> 
   }
 }
 
-async function mymemory(text: string, source?: string): Promise<string> {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source || "Autodetect"}|${DST}`;
+async function mymemory(text: string, source: string | undefined, target: string): Promise<string> {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source || "Autodetect"}|${target}`;
   const res = await fetchT(url);
   if (!res.ok) throw new ProviderError(`MyMemory HTTP ${res.status}`);
   const data = await res.json();
@@ -27,12 +26,12 @@ async function mymemory(text: string, source?: string): Promise<string> {
   return decodeEntities(out);
 }
 
-async function google(text: string, key: string, source?: string): Promise<{ text: string; detected?: string }> {
+async function google(text: string, key: string, source: string | undefined, target: string): Promise<{ text: string; detected?: string }> {
   if (!key) throw new ProviderError("Falta la API key de Google Cloud Translation");
   const res = await fetchT(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(key)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: text, ...(source ? { source } : {}), target: DST, format: "text" }),
+    body: JSON.stringify({ q: text, ...(source ? { source } : {}), target, format: "text" }),
   });
   if (!res.ok) throw new ProviderError(`Google HTTP ${res.status}`);
   const data = await res.json();
@@ -41,13 +40,13 @@ async function google(text: string, key: string, source?: string): Promise<{ tex
   return { text: decodeEntities(t.translatedText), detected: t.detectedSourceLanguage };
 }
 
-async function deepl(text: string, key: string, source?: string): Promise<{ text: string; detected?: string }> {
+async function deepl(text: string, key: string, source: string | undefined, target: string): Promise<{ text: string; detected?: string }> {
   if (!key) throw new ProviderError("Falta la API key de DeepL");
   const host = key.endsWith(":fx") ? "api-free.deepl.com" : "api.deepl.com";
   const res = await fetchT(`https://${host}/v2/translate`, {
     method: "POST",
     headers: { Authorization: `DeepL-Auth-Key ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ text: [text], ...(source ? { source_lang: source.toUpperCase() } : {}), target_lang: "ES" }),
+    body: JSON.stringify({ text: [text], ...(source ? { source_lang: source.toUpperCase() } : {}), target_lang: target === "en" ? "EN-US" : target.toUpperCase() }),
   });
   if (!res.ok) throw new ProviderError(`DeepL HTTP ${res.status}`);
   const data = await res.json();
@@ -61,13 +60,14 @@ export async function translateRemote(
   text: string,
   s: Settings,
   source?: string,
+  target = "es",
 ): Promise<{ translation: string; provider: string; detected?: string }> {
   const viaDeepl = async () => {
-    const r = await deepl(text, s.deeplKey, source);
+    const r = await deepl(text, s.deeplKey, source, target);
     return { translation: r.text, provider: "DeepL", detected: r.detected ?? source };
   };
   const viaGoogle = async () => {
-    const r = await google(text, s.googleKey, source);
+    const r = await google(text, s.googleKey, source, target);
     return { translation: r.text, provider: "Google", detected: r.detected ?? source };
   };
   switch (s.provider) {
@@ -80,7 +80,7 @@ export async function translateRemote(
     default:
       if (s.provider === "auto" && s.deeplKey) return viaDeepl();
       if (s.provider === "auto" && s.googleKey) return viaGoogle();
-      return { translation: await mymemory(text, source), provider: "MyMemory", detected: source };
+      return { translation: await mymemory(text, source, target), provider: "MyMemory", detected: source };
   }
 }
 

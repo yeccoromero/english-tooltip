@@ -7,7 +7,7 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 🔊 Pronunciación en inglés (Web Speech API, gratis).
 - ⭐ Guardar en vocabulario → página de vocabulario con lista y **exportación CSV** (importable en Anki).
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
-- Detecta el idioma automáticamente (cualquier idioma → español) y no traduce texto que ya está en español (configurable). Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
+- Detecta el idioma automáticamente (cualquier idioma → español) y traduce todo lo que subrayas: cualquier idioma → español, y si el texto ya está en español → inglés. Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
 ## Traducir sin subrayar (hover)
 Deja el mouse quieto ~0,7 s sobre una palabra y aparece la traducción; al mover el mouse se cierra. Si subrayas algo, manda la selección. Se puede desactivar o cambiar la espera en Opciones.

@@ -8,7 +8,6 @@ export interface Settings {
   anthropicKey: string;
   disabledHosts: string[];
   maxChars: number;
-  skipSpanish: boolean;
   hover: boolean;
   hoverDelay: number;
 }
@@ -21,7 +20,6 @@ export const DEFAULT_SETTINGS: Settings = {
   anthropicKey: "",
   disabledHosts: [],
   maxChars: 500,
-  skipSpanish: true,
   hover: true,
   hoverDelay: 700,
 };

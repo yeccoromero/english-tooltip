@@ -78,15 +78,18 @@ async function detect(text: string): Promise<string | null> {
 async function translate(
   text: string,
   source: string | null,
+  target: string,
 ): Promise<{ translation: string; provider: string; detected?: string }> {
   if (source && (settings.provider === "auto" || settings.provider === "chrome")) {
-    const local = await translateLocal(text, source);
+    const local = await translateLocal(text, source, target);
     if (local) return { translation: local, provider: "Chrome (local)", detected: source };
   }
-  const res = await send({ type: "translate", text, source: source ?? undefined });
+  const res = await send({ type: "translate", text, source: source ?? undefined, target });
   if (res.ok && "translation" in res) return res;
   throw new Error(res.ok ? "Sin respuesta" : res.error);
 }
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 async function onSelection(): Promise<void> {
   if (!isActive()) return;
@@ -104,32 +107,21 @@ async function run(text: string, rect: DOMRect): Promise<void> {
     return;
   }
 
-  // Automatic language detection; text that is already Spanish is left alone.
+  // Everything you select gets translated. Language is detected automatically;
+  // text that is already Spanish is translated to English instead.
   const source = await detect(text);
   if (my !== token) return;
-  if (source === "es" && settings.skipSpanish) {
-    tooltip.hide();
-    return;
-  }
+  const target = source === "es" ? "en" : "es";
 
   tooltip.show(rect, { original: text, state: "loading" }, handlers);
   try {
-    const out = await translate(text, source);
+    const out = await translate(text, source, target);
     if (my !== token) return;
-    const sameAsOriginal = out.translation.trim().toLowerCase() === text.toLowerCase();
-    if ((out.detected === "es" || sameAsOriginal) && settings.skipSpanish) {
-      tooltip.hide(); // already Spanish (or untranslatable, e.g. a name): nothing to show
-      return;
-    }
     current = { text, translation: out.translation };
     const from = out.detected ? langName(out.detected) : null;
+    const label = from ? `${cap(from)} → ${cap(langName(target))} · ` : "";
     tooltip.update(
-      {
-        original: text,
-        state: "done",
-        translation: out.translation,
-        provider: `${from ? `${from[0].toUpperCase()}${from.slice(1)} → Español · ` : ""}${out.provider}`,
-      },
+      { original: text, state: "done", translation: out.translation, provider: `${label}${out.provider}` },
       handlers,
     );
   } catch (e) {

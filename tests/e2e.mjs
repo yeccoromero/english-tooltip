@@ -46,7 +46,7 @@ await page.evaluate(() => {
   document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
 });
 await page.waitForTimeout(600);
-console.log("no tooltip for Spanish text:", (await tipText()) === null);
+console.log("tooltip also for Spanish text:", (await tipText()) !== null);
 
 await page.keyboard.press("Escape");
 await page.evaluate(() => {
