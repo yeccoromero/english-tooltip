@@ -57,4 +57,19 @@ await page.evaluate(() => {
 await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin)"), null, { timeout: 15000 });
 console.log("single word tooltip:", (await tipText()).split("\n")[0]);
 
+// Icon toggle: storage flag off -> badge OFF and no tooltip.
+await sw.evaluate(() => chrome.storage.sync.set({ enabled: false }));
+await page.waitForTimeout(500);
+console.log("badge:", await sw.evaluate(() => chrome.action.getBadgeText({})));
+await page.evaluate(() => {
+  const r = document.createRange(); r.selectNodeContents(document.getElementById("p"));
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+});
+await page.waitForTimeout(700);
+console.log("no tooltip when disabled:", (await tipText()) === null);
+await sw.evaluate(() => chrome.storage.sync.set({ enabled: true }));
+await page.waitForTimeout(300);
+console.log("badge when on:", JSON.stringify(await sw.evaluate(() => chrome.action.getBadgeText({}))));
+
 await ctx.close(); server.close();

@@ -11,7 +11,7 @@ const opts = {
     content: "src/content/index.ts",
     background: "src/background/index.ts",
     options: "src/options/index.ts",
-    popup: "src/popup/index.ts",
+    vocab: "src/vocab/index.ts",
   },
   outdir: "dist",
   bundle: true,

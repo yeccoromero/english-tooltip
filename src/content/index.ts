@@ -9,7 +9,15 @@ const tinyFrame = window.top !== window && (window.innerWidth < 200 || window.in
 
 let settings: Settings = DEFAULT_SETTINGS;
 getSettings().then((s) => (settings = s));
-chrome.storage.onChanged.addListener(() => getSettings().then((s) => (settings = s)));
+chrome.storage.onChanged.addListener(() =>
+  getSettings().then((s) => {
+    settings = s;
+    if (!isActive()) {
+      token++;
+      tooltip.hide();
+    }
+  }),
+);
 
 const tooltip = new Tooltip();
 let token = 0; // invalidates stale async results

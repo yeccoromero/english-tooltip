@@ -1,4 +1,4 @@
-import { getSettings } from "../shared/settings";
+import { getSettings, saveSettings } from "../shared/settings";
 import { explainWithClaude, translateRemote } from "../shared/providers";
 import type { Request, Response, SavedWord } from "../shared/messages";
 
@@ -36,3 +36,31 @@ chrome.runtime.onMessage.addListener((req: Request, _sender, sendResponse) => {
   handle(req).then(sendResponse);
   return true; // async response
 });
+
+async function updateBadge(): Promise<void> {
+  const { enabled } = await getSettings();
+  await chrome.action.setBadgeText({ text: enabled ? "" : "OFF" });
+  await chrome.action.setBadgeBackgroundColor({ color: "#dc2626" });
+  await chrome.action.setTitle({
+    title: enabled ? "English Tooltip: activado (clic para desactivar)" : "English Tooltip: desactivado (clic para activar)",
+  });
+}
+
+// One click on the icon = on/off. Nothing else to choose.
+chrome.action.onClicked.addListener(async () => {
+  const { enabled } = await getSettings();
+  await saveSettings({ enabled: !enabled });
+});
+
+chrome.storage.onChanged.addListener(updateBadge);
+chrome.runtime.onStartup.addListener(updateBadge);
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({ id: "vocab", title: "Mi vocabulario", contexts: ["action"] });
+  chrome.contextMenus.create({ id: "options", title: "Opciones", contexts: ["action"] });
+  updateBadge();
+});
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId === "vocab") chrome.tabs.create({ url: chrome.runtime.getURL("vocab.html") });
+  if (info.menuItemId === "options") chrome.runtime.openOptionsPage();
+});
+updateBadge();

@@ -5,9 +5,13 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 ## Funciones
 - Tooltip con la traducción junto a la selección (Shadow DOM, modo claro/oscuro, `Esc` o clic fuera para cerrar).
 - 🔊 Pronunciación en inglés (Web Speech API, gratis).
-- ⭐ Guardar en vocabulario → popup de la extensión con lista y **exportación CSV** (importable en Anki).
+- ⭐ Guardar en vocabulario → página de vocabulario con lista y **exportación CSV** (importable en Anki).
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
 - Detecta el idioma automáticamente (cualquier idioma → español) y no traduce texto que ya está en español (configurable). Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
+
+## Uso del icono
+- **Clic en el icono:** activa o desactiva la extensión (la insignia roja «OFF» indica que está apagada). No pide nada más.
+- **Clic derecho en el icono:** «Mi vocabulario» y «Opciones».
 
 ## Motores de traducción (página de opciones)
 | Motor | Coste | Notas |
@@ -43,7 +47,7 @@ Otros scripts: `npm run watch`, `npm run typecheck`, `npm test` (lógica), `npm 
 src/content/     detección de selección, tooltip (Shadow DOM), Translator API local
 src/background/  service worker: traducción remota, explicación con Claude, guardado de vocabulario
 src/shared/      ajustes, proveedores, detección de idioma, mensajes
-src/options/     página de opciones     src/popup/   vocabulario
+src/options/     página de opciones     src/vocab/   vocabulario
 public/          manifest.json, HTML, iconos (regenerar con node scripts/icons.mjs)
 ```
 
