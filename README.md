@@ -7,7 +7,7 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 🔊 Pronunciación en inglés (Web Speech API, gratis).
 - ⭐ Guardar en vocabulario → popup de la extensión con lista y **exportación CSV** (importable en Anki).
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
-- Solo traduce si el texto parece inglés (configurable), límite de caracteres y lista de sitios desactivados.
+- Detecta el idioma automáticamente (cualquier idioma → español) y no traduce texto que ya está en español (configurable). Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
 ## Motores de traducción (página de opciones)
 | Motor | Coste | Notas |

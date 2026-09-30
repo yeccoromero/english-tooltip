@@ -2,18 +2,19 @@ import { getSettings } from "../shared/settings";
 import { explainWithClaude, translateRemote } from "../shared/providers";
 import type { Request, Response, SavedWord } from "../shared/messages";
 
-const cache = new Map<string, { translation: string; provider: string }>();
+const cache = new Map<string, { translation: string; provider: string; detected?: string }>();
 const CACHE_MAX = 200;
 
 async function handle(req: Request): Promise<Response> {
   const s = await getSettings();
   try {
     if (req.type === "translate") {
-      const hit = cache.get(req.text);
+      const key = `${req.source ?? "auto"}|${req.text}`;
+      const hit = cache.get(key);
       if (hit) return { ok: true, ...hit };
-      const out = await translateRemote(req.text, s);
+      const out = await translateRemote(req.text, s, req.source);
       if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
-      cache.set(req.text, out);
+      cache.set(key, out);
       return { ok: true, ...out };
     }
     if (req.type === "explain") {

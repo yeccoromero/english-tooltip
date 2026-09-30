@@ -12,14 +12,15 @@ const CSS = `
   .orig { color: #9ca3af !important; }
   button:hover { background: #374151 !important; }
 }
-.orig { font-size: 12px; color: #6b7280; margin-bottom: 4px; overflow-wrap: anywhere; }
+.orig { font-size: 12px; color: #6b7280; margin-top: 4px; overflow-wrap: anywhere; }
 .tr { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
 .err { color: #dc2626; font-size: 13px; }
-.meta { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+.meta { font-size: 11px; color: #9ca3af; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
 .expl { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb33; font-size: 13px; white-space: pre-wrap; }
-.bar { display: flex; gap: 4px; margin-top: 8px; }
+.bar { display: flex; gap: 4px; }
 button {
-  all: unset; cursor: pointer; padding: 2px 8px; border-radius: 6px; font-size: 13px;
+  all: unset; cursor: pointer; padding: 1px 6px; border-radius: 6px; font-size: 12px;
   border: 1px solid #9ca3af55;
 }
 button:hover { background: #e5e7eb; }
@@ -99,13 +100,15 @@ export class Tooltip {
 
   private render(c: TipContent, h: TipHandlers): void {
     const body = document.createElement("div");
-    const orig = div("orig", truncate(c.original, 120));
-    body.append(orig);
-    if (c.state === "loading") body.append(div("tr spin", "Traduciendo…"));
-    if (c.state === "error") body.append(div("err", c.error ?? "Error"));
-    if (c.state === "done") {
-      body.append(div("tr", c.translation ?? ""));
-      if (c.provider) body.append(div("meta", c.provider));
+    if (c.state === "loading") {
+      body.append(div("tr spin", "Traduciendo…"), div("orig", truncate(c.original, 120)));
+    } else if (c.state === "error") {
+      body.append(div("err", c.error ?? "Error"), div("orig", truncate(c.original, 120)));
+    } else {
+      // Translation first (big), original text below (small).
+      body.append(div("tr", c.translation ?? ""), div("orig", truncate(c.original, 120)));
+      const foot = document.createElement("div");
+      foot.className = "foot";
       const bar = document.createElement("div");
       bar.className = "bar";
       bar.append(
@@ -113,12 +116,12 @@ export class Tooltip {
         btn("⭐", "Guardar en vocabulario", h.onSave),
         btn("💡", "Explicar (Claude)", h.onExplain),
       );
+      foot.append(div("meta", c.provider ?? ""), bar);
       this.expl = div("expl", "");
       this.expl.hidden = true;
-      body.append(bar, this.expl);
-    } else {
-      this.expl = null;
+      body.append(foot, this.expl);
     }
+    if (c.state !== "done") this.expl = null;
     this.tip.replaceChildren(body);
   }
 

@@ -6,12 +6,12 @@ export interface SavedWord {
 }
 
 export type Request =
-  | { type: "translate"; text: string }
+  | { type: "translate"; text: string; source?: string }
   | { type: "explain"; text: string; translation: string }
   | { type: "save"; word: SavedWord };
 
 export type Response =
-  | { ok: true; translation: string; provider: string }
+  | { ok: true; translation: string; provider: string; detected?: string }
   | { ok: true; explanation: string }
   | { ok: true }
   | { ok: false; error: string };

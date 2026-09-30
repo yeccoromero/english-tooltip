@@ -1,7 +1,7 @@
 import { getSettings, DEFAULT_SETTINGS, type Settings } from "../shared/settings";
-import { looksEnglish, normalize } from "../shared/lang";
+import { guessLang, langName, normalize } from "../shared/lang";
 import { send } from "../shared/messages";
-import { translateLocal } from "./local";
+import { detectLocal, translateLocal } from "./local";
 import { Tooltip, type TipContent, type TipHandlers } from "./tooltip";
 
 // Don't run inside tiny/ad iframes.
@@ -58,13 +58,24 @@ const handlers: TipHandlers = {
   },
 };
 
-async function translate(text: string): Promise<{ translation: string; provider: string }> {
-  if (settings.provider === "auto" || settings.provider === "chrome") {
-    const local = await translateLocal(text);
-    if (local) return { translation: local, provider: "Chrome (local)" };
+/** Detect the language: Chrome's detector first, offline heuristic as fallback. null = unknown. */
+async function detect(text: string): Promise<string | null> {
+  const found = (await detectLocal(text)) ?? guessLang(text);
+  if (found) return found;
+  // A single Latin-script word can't be detected reliably; you're learning English, so assume it.
+  return /^[A-Za-z'’-]+$/.test(text) ? "en" : null;
+}
+
+async function translate(
+  text: string,
+  source: string | null,
+): Promise<{ translation: string; provider: string; detected?: string }> {
+  if (source && (settings.provider === "auto" || settings.provider === "chrome")) {
+    const local = await translateLocal(text, source);
+    if (local) return { translation: local, provider: "Chrome (local)", detected: source };
   }
-  const res = await send({ type: "translate", text });
-  if (res.ok && "translation" in res) return { translation: res.translation, provider: res.provider };
+  const res = await send({ type: "translate", text, source: source ?? undefined });
+  if (res.ok && "translation" in res) return res;
   throw new Error(res.ok ? "Sin respuesta" : res.error);
 }
 
@@ -76,22 +87,39 @@ async function onSelection(): Promise<void> {
   const my = ++token;
   current = { text };
 
-  if (settings.onlyEnglish && !looksEnglish(text)) {
-    tooltip.hide();
-    return;
-  }
   if (text.length > settings.maxChars) {
     tooltip.show(rect, { original: text, state: "error", error: `Selección demasiado larga (máx. ${settings.maxChars} caracteres)` }, handlers);
     return;
   }
 
-  const c: TipContent = { original: text, state: "loading" };
-  tooltip.show(rect, c, handlers);
+  // Automatic language detection; text that is already Spanish is left alone.
+  const source = await detect(text);
+  if (my !== token) return;
+  if (source === "es" && settings.skipSpanish) {
+    tooltip.hide();
+    return;
+  }
+
+  tooltip.show(rect, { original: text, state: "loading" }, handlers);
   try {
-    const out = await translate(text);
+    const out = await translate(text, source);
     if (my !== token) return;
+    const sameAsOriginal = out.translation.trim().toLowerCase() === text.toLowerCase();
+    if ((out.detected === "es" || sameAsOriginal) && settings.skipSpanish) {
+      tooltip.hide(); // already Spanish (or untranslatable, e.g. a name): nothing to show
+      return;
+    }
     current = { text, translation: out.translation };
-    tooltip.update({ original: text, state: "done", ...out }, handlers);
+    const from = out.detected ? langName(out.detected) : null;
+    tooltip.update(
+      {
+        original: text,
+        state: "done",
+        translation: out.translation,
+        provider: `${from ? `${from[0].toUpperCase()}${from.slice(1)} → Español · ` : ""}${out.provider}`,
+      },
+      handlers,
+    );
   } catch (e) {
     if (my !== token) return;
     tooltip.update({ original: text, state: "error", error: e instanceof Error ? e.message : String(e) }, handlers);

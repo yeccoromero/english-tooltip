@@ -5,7 +5,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 (async () => {
   const s = await getSettings();
   $<HTMLInputElement>("enabled").checked = s.enabled;
-  $<HTMLInputElement>("onlyEnglish").checked = s.onlyEnglish;
+  $<HTMLInputElement>("skipSpanish").checked = s.skipSpanish;
   $<HTMLSelectElement>("provider").value = s.provider;
   $<HTMLInputElement>("googleKey").value = s.googleKey;
   $<HTMLInputElement>("deeplKey").value = s.deeplKey;
@@ -18,7 +18,7 @@ $("save").addEventListener("click", async () => {
   const max = Number($<HTMLInputElement>("maxChars").value);
   await saveSettings({
     enabled: $<HTMLInputElement>("enabled").checked,
-    onlyEnglish: $<HTMLInputElement>("onlyEnglish").checked,
+    skipSpanish: $<HTMLInputElement>("skipSpanish").checked,
     provider: $<HTMLSelectElement>("provider").value as Provider,
     googleKey: $<HTMLInputElement>("googleKey").value.trim(),
     deeplKey: $<HTMLInputElement>("deeplKey").value.trim(),

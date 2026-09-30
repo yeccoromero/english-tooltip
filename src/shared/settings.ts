@@ -8,7 +8,7 @@ export interface Settings {
   anthropicKey: string;
   disabledHosts: string[];
   maxChars: number;
-  onlyEnglish: boolean;
+  skipSpanish: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   anthropicKey: "",
   disabledHosts: [],
   maxChars: 500,
-  onlyEnglish: true,
+  skipSpanish: true,
 };
 
 export async function getSettings(): Promise<Settings> {

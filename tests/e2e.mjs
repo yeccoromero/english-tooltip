@@ -8,7 +8,7 @@ import fs from "node:fs";
 const ext = path.resolve("dist");
 const server = http.createServer((_, res) => {
   res.setHeader("content-type", "text/html");
-  res.end(`<body style="font:20px sans-serif;padding:120px"><p id="p">The quick brown fox jumps over the lazy dog.</p><p id="es">El perro de mi vecino es muy grande.</p></body>`);
+  res.end(`<body style="font:20px sans-serif;padding:220px 120px"><p id="p">The quick brown fox jumps over the lazy dog.</p><p id="w">serendipity</p><p id="es">El perro de mi vecino es muy grande.</p></body>`);
 }).listen(0);
 const url = `http://localhost:${server.address().port}/`;
 
@@ -47,5 +47,14 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(600);
 console.log("no tooltip for Spanish text:", (await tipText()) === null);
+
+await page.keyboard.press("Escape");
+await page.evaluate(() => {
+  const r = document.createRange(); r.selectNodeContents(document.getElementById("w"));
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+});
+await page.waitForFunction(() => document.querySelector("english-tooltip")?.shadowRoot?.querySelector(".tr:not(.spin)"), null, { timeout: 15000 });
+console.log("single word tooltip:", (await tipText()).split("\n")[0]);
 
 await ctx.close(); server.close();

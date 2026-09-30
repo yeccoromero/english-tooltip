@@ -5,25 +5,38 @@ function words(text: string): string[] {
   return text.toLowerCase().match(/[a-záéíóúñü']+/g) ?? [];
 }
 
-/** True when the text plausibly is English (or too short/ambiguous to tell). */
-export function looksEnglish(text: string): boolean {
+/** Collapse whitespace and trim. */
+export function normalize(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Cheap offline guess for Spanish vs English. Returns null when unsure
+ * (other scripts, single ambiguous words…) so callers can auto-detect instead.
+ */
+export function guessLang(text: string): "es" | "en" | null {
   const ws = words(text);
-  if (ws.length === 0) return false;
-  if (/[áéíóúñü¿¡]/i.test(text)) return false;
-  // Non-latin scripts: not English.
+  if (ws.length === 0) return null;
   const letters = text.replace(/[^\p{L}]/gu, "");
-  const latin = text.replace(/[^A-Za-z]/g, "");
-  if (letters.length > 0 && latin.length / letters.length < 0.7) return false;
+  const latin = text.replace(/[^A-Za-z\u00C0-\u00FF]/g, "");
+  if (letters.length > 0 && latin.length / letters.length < 0.7) return null;
   let en = 0;
   let es = 0;
   for (const w of ws) {
     if (EN.has(w)) en++;
     if (ES.has(w)) es++;
   }
-  return !(es > en && es >= 1);
+  if (/[¿¡ñ]/i.test(text) && es >= en) return "es";
+  if (es > en) return "es";
+  if (en > es) return "en";
+  return null;
 }
 
-/** Collapse whitespace and trim. */
-export function normalize(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+/** Spanish name of a language code, e.g. "en" → "inglés". */
+export function langName(code: string): string {
+  try {
+    return new Intl.DisplayNames(["es"], { type: "language" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
 }

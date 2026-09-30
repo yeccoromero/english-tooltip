@@ -2,7 +2,6 @@ import type { Settings } from "./settings";
 
 export class ProviderError extends Error {}
 
-const SRC = "en";
 const DST = "es";
 const TIMEOUT_MS = 10_000;
 
@@ -16,8 +15,8 @@ async function fetchT(input: string, init: RequestInit = {}): Promise<Response> 
   }
 }
 
-async function mymemory(text: string): Promise<string> {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${SRC}|${DST}`;
+async function mymemory(text: string, source?: string): Promise<string> {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source || "Autodetect"}|${DST}`;
   const res = await fetchT(url);
   if (!res.ok) throw new ProviderError(`MyMemory HTTP ${res.status}`);
   const data = await res.json();
@@ -28,53 +27,60 @@ async function mymemory(text: string): Promise<string> {
   return decodeEntities(out);
 }
 
-async function google(text: string, key: string): Promise<string> {
+async function google(text: string, key: string, source?: string): Promise<{ text: string; detected?: string }> {
   if (!key) throw new ProviderError("Falta la API key de Google Cloud Translation");
   const res = await fetchT(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(key)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: text, source: SRC, target: DST, format: "text" }),
+    body: JSON.stringify({ q: text, ...(source ? { source } : {}), target: DST, format: "text" }),
   });
   if (!res.ok) throw new ProviderError(`Google HTTP ${res.status}`);
   const data = await res.json();
-  const out = data?.data?.translations?.[0]?.translatedText;
-  if (typeof out !== "string") throw new ProviderError("Respuesta inválida de Google");
-  return decodeEntities(out);
+  const t = data?.data?.translations?.[0];
+  if (typeof t?.translatedText !== "string") throw new ProviderError("Respuesta inválida de Google");
+  return { text: decodeEntities(t.translatedText), detected: t.detectedSourceLanguage };
 }
 
-async function deepl(text: string, key: string): Promise<string> {
+async function deepl(text: string, key: string, source?: string): Promise<{ text: string; detected?: string }> {
   if (!key) throw new ProviderError("Falta la API key de DeepL");
   const host = key.endsWith(":fx") ? "api-free.deepl.com" : "api.deepl.com";
   const res = await fetchT(`https://${host}/v2/translate`, {
     method: "POST",
     headers: { Authorization: `DeepL-Auth-Key ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ text: [text], source_lang: "EN", target_lang: "ES" }),
+    body: JSON.stringify({ text: [text], ...(source ? { source_lang: source.toUpperCase() } : {}), target_lang: "ES" }),
   });
   if (!res.ok) throw new ProviderError(`DeepL HTTP ${res.status}`);
   const data = await res.json();
-  const out = data?.translations?.[0]?.text;
-  if (typeof out !== "string") throw new ProviderError("Respuesta inválida de DeepL");
-  return out;
+  const t = data?.translations?.[0];
+  if (typeof t?.text !== "string") throw new ProviderError("Respuesta inválida de DeepL");
+  return { text: t.text, detected: t.detected_source_language?.toLowerCase() };
 }
 
-/** Remote (network) translation; runs in the service worker. */
+/** Remote (network) translation; runs in the service worker. `source` undefined = auto-detect. */
 export async function translateRemote(
   text: string,
   s: Settings,
-): Promise<{ translation: string; provider: string }> {
+  source?: string,
+): Promise<{ translation: string; provider: string; detected?: string }> {
+  const viaDeepl = async () => {
+    const r = await deepl(text, s.deeplKey, source);
+    return { translation: r.text, provider: "DeepL", detected: r.detected ?? source };
+  };
+  const viaGoogle = async () => {
+    const r = await google(text, s.googleKey, source);
+    return { translation: r.text, provider: "Google", detected: r.detected ?? source };
+  };
   switch (s.provider) {
     case "google":
-      return { translation: await google(text, s.googleKey), provider: "Google" };
+      return viaGoogle();
     case "deepl":
-      return { translation: await deepl(text, s.deeplKey), provider: "DeepL" };
+      return viaDeepl();
     case "chrome":
       throw new ProviderError("La traducción local de Chrome no está disponible en este navegador");
-    default: {
-      // auto / mymemory: prefer a configured paid key, else MyMemory.
-      if (s.provider === "auto" && s.deeplKey) return { translation: await deepl(text, s.deeplKey), provider: "DeepL" };
-      if (s.provider === "auto" && s.googleKey) return { translation: await google(text, s.googleKey), provider: "Google" };
-      return { translation: await mymemory(text), provider: "MyMemory" };
-    }
+    default:
+      if (s.provider === "auto" && s.deeplKey) return viaDeepl();
+      if (s.provider === "auto" && s.googleKey) return viaGoogle();
+      return { translation: await mymemory(text, source), provider: "MyMemory", detected: source };
   }
 }
 

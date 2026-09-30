@@ -1,17 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { looksEnglish, normalize } from "../src/shared/lang.ts";
+import { guessLang, normalize, langName } from "../src/shared/lang.ts";
 
-test("detects English", () => {
-  assert.equal(looksEnglish("The quick brown fox jumps over the lazy dog"), true);
-  assert.equal(looksEnglish("serendipity"), true); // single ambiguous word → allowed
+test("guesses English", () => {
+  assert.equal(guessLang("The quick brown fox jumps over the lazy dog"), "en");
 });
-test("rejects Spanish and other scripts", () => {
-  assert.equal(looksEnglish("El perro de mi vecino es muy grande"), false);
-  assert.equal(looksEnglish("¿Cómo estás?"), false);
-  assert.equal(looksEnglish("日本語のテキスト"), false);
-  assert.equal(looksEnglish("12345"), false);
+test("guesses Spanish", () => {
+  assert.equal(guessLang("El perro de mi vecino es muy grande"), "es");
+  assert.equal(guessLang("¿Cómo estás?"), "es");
+});
+test("unsure → null (auto-detect later)", () => {
+  assert.equal(guessLang("serendipity"), null);
+  assert.equal(guessLang("日本語のテキスト"), null);
+  assert.equal(guessLang("12345"), null);
 });
 test("normalize collapses whitespace", () => {
   assert.equal(normalize("  hello \n  world\t "), "hello world");
+});
+test("langName is Spanish", () => {
+  assert.equal(langName("en"), "inglés");
 });
