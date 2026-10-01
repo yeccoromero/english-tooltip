@@ -9,6 +9,18 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
 - Detecta el idioma automáticamente (cualquier idioma → español) y traduce todo lo que subrayas: cualquier idioma → español, y si el texto ya está en español → inglés. Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
+## Cuenta y sincronización (web app)
+En **Opciones → Cuenta → Conectar con Google** la extensión inicia sesión por su cuenta (sesión propia, no comparte tokens con la web app) y sincroniza tu vocabulario con la [web app](https://github.com/yeccoromero/english-tooltip-app):
+- Sube lo que guardas, repasas o borras; baja lo que cambias en la web. **Gana el último cambio** (por palabra, con la hora del dispositivo).
+- Funciona sin conexión: los cambios se guardan aquí y suben al volver. Se sincroniza al guardar/repasar, al abrir Chrome y cada 15 min.
+- Tus palabras de antes (sin cuenta) se suben solas la primera vez que conectas.
+- «Desconectar» deja las palabras en el navegador y las marca para subir a la próxima cuenta que conectes.
+- El repaso de la extensión también registra cada respuesta en tu cuenta (racha y estadísticas de la web).
+
+**Configuración necesaria (una vez):** el inicio de sesión vuelve a una dirección fija derivada del ID de la extensión. El manifest incluye una clave (`key`) que fija ese ID: `gmkdjaeaeoiendclnaljkeomjcopgalj`. Añade en Supabase → Authentication → URL Configuration → **Redirect URLs**: `https://gmkdjaeaeoiendclnaljkeomjcopgalj.chromiumapp.org/**`. (Si publicas en la Chrome Web Store el ID cambia: añade también la nueva dirección.)
+
+**Copia de seguridad:** en la página de vocabulario → Lista → *Copia de seguridad* (JSON, incluye el progreso) y *Restaurar copia* (acepta el JSON o el CSV que exporta la extensión).
+
 ## Contexto y diccionario
 - Al guardar con ☆ se guarda también **la frase donde encontraste la palabra** y, si es una sola palabra, su **definición** (📖, diccionario gratuito dictionaryapi.dev: pronunciación fonética, tipo de palabra, definición y ejemplo).
 - En el repaso, la tarjeta muestra la traducción, la definición y la frase con la palabra resaltada.
@@ -53,13 +65,13 @@ npm run build        # genera dist/
 2. **Cargar descomprimida** → elige la carpeta `dist/`.
 3. Abre cualquier página en inglés y selecciona texto.
 
-Otros scripts: `npm run watch`, `npm run typecheck`, `npm test` (lógica), `npm run zip` (paquete para la Chrome Web Store). `node tests/e2e.mjs` carga la extensión en Chromium con Playwright y comprueba el tooltip.
+Otros scripts: `npm run watch`, `npm run typecheck`, `npm test` (lógica), `npm run zip` (paquete para la Chrome Web Store), `npm run test:e2e` (carga la extensión en Chromium con Playwright y comprueba el tooltip, diccionario, repaso…) y `npm run test:sync` (sincronización contra un Supabase simulado).
 
 ## Estructura
 ```
 src/content/     detección de selección, tooltip (Shadow DOM), Translator API local
-src/background/  service worker: traducción remota, explicación con Claude, guardado de vocabulario
-src/shared/      ajustes, proveedores, detección de idioma, mensajes
+src/background/  service worker: traducción remota, Claude, único escritor del vocabulario (store) y sincronización con la cuenta (sync)
+src/shared/      ajustes, proveedores, idioma, mensajes, cuenta (auth), sincronización (sync-core), palabras (words)
 src/options/     página de opciones     src/vocab/   vocabulario
 public/          manifest.json, HTML, iconos (regenerar con node scripts/icons.mjs)
 ```

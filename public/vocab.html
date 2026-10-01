@@ -33,7 +33,8 @@
   .again { background: #dc2626; color: #fff; border-color: #dc2626 !important; }
   [hidden] { display: none !important; }
 </style></head><body>
-<header><h1>Mi vocabulario</h1><a href="#" id="opts">Opciones</a></header>
+<header><h1>Mi vocabulario</h1><span><a href="#" id="webapp" target="_blank">Web app ↗</a> · <a href="#" id="opts">Opciones</a></span></header>
+<div class="chips"><span class="chip" id="syncChip"></span></div>
 <nav><button id="tabReview" class="on">Repasar</button><button id="tabList">Lista</button></nav>
 
 <section id="review">
@@ -52,7 +53,8 @@
 
 <section id="list" hidden>
   <ul id="ul"></ul>
-  <div class="tools"><button id="csv">Exportar CSV (Anki)</button><button id="clear">Borrar todo</button></div>
+  <div class="tools"><button id="csv">Exportar CSV (Anki)</button><button id="backup">Copia de seguridad</button><button id="restore">Restaurar copia</button><button id="clear">Borrar todo</button></div>
+  <input type="file" id="file" accept=".json,.csv,application/json,text/csv" hidden>
 </section>
 <script src="vocab.js"></script>
 </body></html>

@@ -3,6 +3,10 @@ import { explainWithClaude, translateRemote } from "../shared/providers";
 import { lookup } from "../shared/dictionary";
 import { dueQueue } from "../vocab/review";
 import type { Definition, Request, Response, SavedWord } from "../shared/messages";
+import { applyAnswer, applyClear, applyImport, applyRemove, applySave } from "../shared/words";
+import { signInWithGoogle } from "../shared/auth";
+import { mutateWords, recordAnswer } from "./store";
+import { getSyncState, resetAccountLink, scheduleSync } from "./sync";
 
 const cache = new Map<string, { translation: string; provider: string; detected?: string }>();
 const CACHE_MAX = 200;
@@ -34,9 +38,50 @@ async function handle(req: Request): Promise<Response> {
       return { ok: true, definition: def };
     }
     if (req.type === "save") {
-      const { words = [] } = (await chrome.storage.local.get("words")) as { words?: SavedWord[] };
-      const next = [req.word, ...words.filter((w) => w.text.toLowerCase() !== req.word.text.toLowerCase())];
-      await chrome.storage.local.set({ words: next.slice(0, 5000) });
+      await mutateWords((words) => applySave(words, req.word));
+      void scheduleSync();
+      return { ok: true };
+    }
+    if (req.type === "answer") {
+      await mutateWords((words) => applyAnswer(words, req.key, req.known));
+      await recordAnswer(req.key, req.known);
+      void scheduleSync();
+      return { ok: true };
+    }
+    if (req.type === "remove") {
+      await mutateWords((words) => applyRemove(words, req.key));
+      void scheduleSync();
+      return { ok: true };
+    }
+    if (req.type === "clear") {
+      await mutateWords((words) => applyClear(words));
+      void scheduleSync();
+      return { ok: true };
+    }
+    if (req.type === "import") {
+      await mutateWords((words) => applyImport(words, req.words));
+      void scheduleSync();
+      return { ok: true };
+    }
+    if (req.type === "sync") {
+      await scheduleSync();
+      const st = await getSyncState();
+      return st.error ? { ok: false, error: st.error } : { ok: true };
+    }
+    if (req.type === "connect") {
+      const auth = await signInWithGoogle();
+      const prev = await getSyncState();
+      // A different account than before: its server ids don't apply, upload everything to it.
+      if (prev.userId && prev.userId !== auth.user_id) {
+        await mutateWords((words) => words.map((w) => ({ ...w, remoteId: undefined, dirty: true })));
+        await chrome.storage.local.set({ sync: { userId: auth.user_id, email: auth.email } });
+      }
+      await scheduleSync();
+      const st = await getSyncState();
+      return st.error ? { ok: false, error: st.error } : { ok: true };
+    }
+    if (req.type === "disconnect") {
+      await resetAccountLink();
       return { ok: true };
     }
     return { ok: false, error: "Mensaje desconocido" };
@@ -113,3 +158,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 chrome.runtime.onInstalled.addListener(scheduleReminder);
 chrome.runtime.onStartup.addListener(scheduleReminder);
+
+// ---- Account sync ----
+const SYNC_ALARM = "account-sync";
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create(SYNC_ALARM, { periodInMinutes: 15 });
+  void scheduleSync();
+});
+chrome.runtime.onStartup.addListener(() => void scheduleSync());
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === SYNC_ALARM) void scheduleSync();
+});

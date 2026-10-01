@@ -128,10 +128,10 @@ await sw.evaluate(() => chrome.storage.sync.set({ hoverRequireAlt: false }));
 // Reminder alarm.
 await sw.evaluate(() => chrome.storage.sync.set({ reminder: true, reminderHour: 9 }));
 await page.waitForTimeout(500);
-console.log("alarm scheduled:", (await sw.evaluate(() => chrome.alarms.getAll())).map((a) => a.name).join(","));
+console.log("alarm scheduled:", (await sw.evaluate(() => chrome.alarms.getAll())).map((a) => a.name).includes("daily-review"));
 await sw.evaluate(() => chrome.storage.sync.set({ reminder: false }));
 await page.waitForTimeout(300);
-console.log("alarm cleared:", (await sw.evaluate(() => chrome.alarms.getAll())).length === 0);
+console.log("alarm cleared:", !(await sw.evaluate(() => chrome.alarms.getAll())).some((a) => a.name === "daily-review"));
 
 // Flashcards page.
 const extId = new URL(sw.url()).host;
@@ -142,6 +142,7 @@ console.log("front:", await rp.textContent("#front"), "| back hidden:", await rp
 await rp.click("#show");
 console.log("back:", await rp.textContent("#back"));
 await rp.click("#good");
+await rp.waitForFunction(() => document.querySelector("#streak")?.textContent.includes("1 día"));
 console.log("chips:", await rp.textContent("#streak"), "|", await rp.textContent("#today"));
 console.log("done msg:", (await rp.textContent("#done")).slice(0, 20));
 const saved = await sw.evaluate(async () => (await chrome.storage.local.get("words")).words[0]);
