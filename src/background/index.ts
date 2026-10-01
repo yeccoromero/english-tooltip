@@ -112,12 +112,19 @@ chrome.action.onClicked.addListener(async () => {
 
 chrome.storage.onChanged.addListener(updateBadge);
 chrome.runtime.onStartup.addListener(updateBadge);
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async (details) => {
+  // Welcome / sign-in flow the first time (fresh install, or an update from a version that had none).
+  if (details.reason === "install" || details.reason === "update") {
+    const { onboarded } = (await chrome.storage.local.get("onboarded")) as { onboarded?: boolean };
+    if (!onboarded) await chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
+  }
+  chrome.contextMenus.create({ id: "welcome", title: "Bienvenida y cuenta", contexts: ["action"] });
   chrome.contextMenus.create({ id: "vocab", title: "Mi vocabulario", contexts: ["action"] });
   chrome.contextMenus.create({ id: "options", title: "Opciones", contexts: ["action"] });
   updateBadge();
 });
 chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId === "welcome") chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
   if (info.menuItemId === "vocab") chrome.tabs.create({ url: chrome.runtime.getURL("vocab.html") });
   if (info.menuItemId === "options") chrome.runtime.openOptionsPage();
 });

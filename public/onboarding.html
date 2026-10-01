@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bienvenido a English Tooltip</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fafafa; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#4f46e5; --good:#16a34a; --bad:#dc2626; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1218; --card:#1a1f2a; --text:#f3f4f6; --muted:#9ca3af; --line:#2d3442; --accent:#818cf8; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; }
+  main { width: 100%; max-width: 520px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 32px 28px; box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+  .dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 22px; }
+  .dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--line); transition: all .2s; }
+  .dots i.on { width: 24px; background: var(--accent); }
+  h1 { font-size: 24px; margin: 0 0 8px; text-align: center; }
+  p.lead { color: var(--muted); text-align: center; margin: 0 0 22px; }
+  .demo { position: relative; padding: 36px 8px 8px; text-align: center; font-size: 19px; margin-bottom: 18px; }
+  .demo .tip { position: absolute; top: 0; left: 50%; transform: translateX(-60%); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.14); white-space: nowrap; }
+  .demo .side { position: absolute; top: 3px; left: calc(50% + 120px); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px; font-size: 13px; letter-spacing: 3px; box-shadow: 0 4px 16px rgba(0,0,0,.14); }
+  .demo mark { background: #fde68a88; color: inherit; border-radius: 3px; padding: 0 3px; }
+  ul.list { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 10px; }
+  ul.list li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); }
+  ul.list li b { color: var(--text); }
+  ul.list span { font-size: 20px; line-height: 1.3; }
+  button, a.btn { display: block; width: 100%; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; }
+  button.primary, a.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .6; cursor: default; }
+  .stack { display: grid; gap: 10px; }
+  .link { background: none; border: 0; color: var(--muted); font-weight: 400; font-size: 14px; padding: 6px; }
+  .link:hover { color: var(--text); text-decoration: underline; }
+  .msg { min-height: 22px; text-align: center; font-size: 14px; margin: 8px 0 0; }
+  .msg.err { color: var(--bad); } .msg.ok { color: var(--good); }
+  [hidden] { display: none !important; }
+</style></head><body>
+<main>
+  <div class="dots"><i id="d1" class="on"></i><i id="d2"></i><i id="d3"></i></div>
+
+  <!-- Paso 1: bienvenida -->
+  <section id="s1">
+    <h1>Aprende inglés mientras lees</h1>
+    <p class="lead">Subraya una palabra o frase en cualquier página y verás la traducción justo encima.</p>
+    <div class="demo">
+      <div class="tip">Serendipia</div><div class="side">🔊 ☆ 💡</div>
+      The discovery was pure <mark>serendipity</mark>.
+    </div>
+    <ul class="list">
+      <li><span>🖱️</span><div><b>Subraya</b> texto, o deja el mouse quieto sobre una palabra.</div></li>
+      <li><span>☆</span><div><b>Guarda</b> las palabras que no entiendes con su frase y su definición.</div></li>
+      <li><span>🔁</span><div><b>Repásalas</b> con tarjetas y repetición espaciada.</div></li>
+    </ul>
+    <button class="primary" id="next1">Empezar</button>
+  </section>
+
+  <!-- Paso 2: cuenta -->
+  <section id="s2" hidden>
+    <h1>Conecta tu cuenta</h1>
+    <p class="lead">Tu vocabulario se guarda en tu cuenta y lo ves y repasas también en la web app, desde cualquier dispositivo.</p>
+    <ul class="list">
+      <li><span>☁️</span><div><b>Sincronizado</b> entre la extensión y la web app.</div></li>
+      <li><span>🔥</span><div><b>Racha y estadísticas</b> de tus repasos.</div></li>
+      <li><span>🔒</span><div><b>Privado:</b> solo tú ves tus palabras.</div></li>
+    </ul>
+    <div class="stack">
+      <button class="primary" id="connect">Continuar con Google</button>
+      <button class="link" id="skip">Ahora no, usar sin cuenta</button>
+    </div>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <!-- Paso 3: listo -->
+  <section id="s3" hidden>
+    <h1>¡Todo listo! 🎉</h1>
+    <p class="lead" id="doneLead">Ya puedes usar la extensión.</p>
+    <ul class="list">
+      <li><span>💡</span><div>Pulsa el <b>icono</b> de la extensión para activarla o desactivarla.</div></li>
+      <li><span>⚙️</span><div>En <b>Opciones</b> eliges el motor de traducción, el aviso diario y la tecla Alt.</div></li>
+      <li><span>📖</span><div>Tu vocabulario está en <b>clic derecho en el icono → Mi vocabulario</b>.</div></li>
+    </ul>
+    <div class="stack">
+      <a class="btn primary" id="try" href="https://en.wikipedia.org/wiki/Serendipity" target="_blank">Probar en una página en inglés</a>
+      <a class="btn" id="vocab" href="vocab.html" target="_blank">Abrir mi vocabulario</a>
+      <a class="btn" id="webapp" href="#" target="_blank" hidden>Abrir la web app</a>
+    </div>
+  </section>
+</main>
+<script src="onboarding.js"></script>
+</body></html>

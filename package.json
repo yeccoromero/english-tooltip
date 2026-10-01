@@ -11,7 +11,8 @@
     "test": "node scripts/test.mjs",
     "zip": "npm run build && cd dist && zip -r ../english-tooltip.zip .",
     "test:e2e": "node tests/e2e.mjs",
-    "test:sync": "node tests/e2e-sync.mjs"
+    "test:sync": "node tests/e2e-sync.mjs",
+    "test:onboarding": "node tests/e2e-onboarding.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.326",

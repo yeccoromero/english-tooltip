@@ -12,6 +12,7 @@ const opts = {
     background: "src/background/index.ts",
     options: "src/options/index.ts",
     vocab: "src/vocab/index.ts",
+    onboarding: "src/onboarding/index.ts",
   },
   outdir: "dist",
   bundle: true,

@@ -9,6 +9,9 @@ Extensión de Chrome (Manifest V3) para aprender inglés: **selecciona texto en 
 - 💡 Explicación del significado en contexto con Claude (opcional, requiere tu API key de Anthropic).
 - Detecta el idioma automáticamente (cualquier idioma → español) y traduce todo lo que subrayas: cualquier idioma → español, y si el texto ya está en español → inglés. Funciona con una sola palabra. Límite de caracteres y lista de sitios desactivados.
 
+## Bienvenida e inicio de sesión
+La primera vez (al instalar, o al actualizar desde una versión sin bienvenida) se abre una página de **bienvenida** en 3 pasos: cómo funciona, **Conectar con Google** (o «Ahora no, usar sin cuenta») y consejos. Si cierras la pestaña sin terminar, volverá a abrirse en la próxima carga hasta que la completes. Siempre puedes reabrirla con *clic derecho en el icono → Bienvenida y cuenta*.
+
 ## Cuenta y sincronización (web app)
 En **Opciones → Cuenta → Conectar con Google** la extensión inicia sesión por su cuenta (sesión propia, no comparte tokens con la web app) y sincroniza tu vocabulario con la [web app](https://github.com/yeccoromero/english-tooltip-app):
 - Sube lo que guardas, repasas o borras; baja lo que cambias en la web. **Gana el último cambio** (por palabra, con la hora del dispositivo).
